@@ -8,7 +8,9 @@ export function validateActivity(form, existing, now = new Date()) {
 
   const title = form.title.trim();
   if (!title) errors.title = 'Give the activity a title.';
-  else if (title.length > 80) errors.title = 'Keep the title under 80 characters.';
+  else if (title.length > 200) errors.title = 'Keep the title under 200 characters.';
+
+  if (!form.description.trim()) errors.description = 'Describe the activity.';
 
   const start = fromDateAndTime(form.date, form.startTime);
   const end = fromDateAndTime(form.date, form.endTime);
@@ -18,7 +20,8 @@ export function validateActivity(form, existing, now = new Date()) {
 
   const deadline = fromDateTimeInput(form.deadline);
   if (!deadline) errors.deadline = 'Set a registration deadline.';
-  else if (start && deadline > start) errors.deadline = 'Registration must close before the activity starts.';
+  else if (deadline <= now) errors.deadline = 'Registration must close in the future.';
+  else if (start && deadline >= start) errors.deadline = 'Registration must close before the activity starts.';
 
   const confirmed = existing?.confirmedCount ?? 1;
   if (!(form.min >= 1)) errors.capacity = 'The minimum must be at least 1.';
@@ -27,11 +30,10 @@ export function validateActivity(form, existing, now = new Date()) {
   else if (form.max < confirmed) errors.capacity = `${confirmed} people are already confirmed, so the maximum cannot go below that.`;
 
   if (costTotal(form.costItems) > 0) {
-    const lock = fromDateTimeInput(form.costLock);
-    if (!lock) errors.costLock = 'Paid activities must set a cost lock time.';
-    else if (start && lock >= start) errors.costLock = 'The cost lock must be before the activity starts.';
-    else if (!existing?.costLockAt && lock <= now) errors.costLock = 'The cost lock must be in the future.';
+    errors.costItems = 'Paid activity saving will be connected in the costs task. Remove cost items to save this draft.';
   }
+
+  if (form.rules.length > 0) errors.rules = 'Rule saving will be connected in the rules task. Remove rules to save this draft.';
 
   return errors;
 }

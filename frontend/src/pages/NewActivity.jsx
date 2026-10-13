@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Field, Segmented, Stepper } from '../components/FormControls.jsx';
 import { useToast } from '../components/Toast.jsx';
+import { createActivity } from '../api/activities.js';
 import { CATEGORIES, JOIN_MODES, MAX_CAPACITY, SPLIT_MODES } from '../data/constants.js';
-import { CURRENT_MEMBER } from '../data/mockData.js';
 import { activityToForm, emptyForm, formToActivity } from '../lib/activityForm.js';
 import {
   addHours,
@@ -17,6 +17,7 @@ import {
 } from '../lib/format.js';
 import { hasErrors, validateActivity } from '../lib/validate.js';
 import { useActivities } from '../store/ActivityContext.jsx';
+import { useAuth } from '../store/AuthContext.jsx';
 
 /** C1 · Enter details, rules, capacity & cost. Also used to edit a hosted activity. */
 export default function NewActivity() {
@@ -32,12 +33,15 @@ function ActivityForm({ existing }) {
   const navigate = useNavigate();
   const toast = useToast();
   const { saveActivity } = useActivities();
+  const { user } = useAuth();
 
   const [form, setForm] = useState(() => (existing ? activityToForm(existing) : emptyForm()));
   const [attempts, setAttempts] = useState(0);
   const [newItem, setNewItem] = useState({ label: '', amount: '' });
   const [itemError, setItemError] = useState('');
   const [newRule, setNewRule] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [serverError, setServerError] = useState('');
   const summaryRef = useRef(null);
   const itemInputRef = useRef(null);
   const ruleInputRef = useRef(null);
@@ -95,29 +99,41 @@ function ActivityForm({ existing }) {
     }
   };
 
-  function save() {
-    saveActivity(formToActivity(form, existing, CURRENT_MEMBER));
+  async function save() {
+    const localActivity = formToActivity(form, existing, user);
+    if (existing) {
+      saveActivity(localActivity);
+      return localActivity;
+    }
+    const savedActivity = await createActivity(localActivity);
+    saveActivity(savedActivity);
+    return savedActivity;
+  }
+
+  async function persistDraft() {
+    setAttempts((n) => n + 1);
+    setServerError('');
+    if (hasErrors(errors)) return;
+    setSaving(true);
+    try {
+      await save();
+      toast('Draft saved to the database.');
+      navigate('/mine');
+    } catch (error) {
+      setServerError(error.message);
+      toast(error.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleSaveDraft() {
-    if (!form.title.trim()) {
-      toast('Add a title before saving a draft.');
-      return;
-    }
-    save();
-    toast('Draft saved.');
-    navigate('/mine');
+    persistDraft();
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setAttempts((n) => n + 1);
-    if (hasErrors(errors)) return;
-    save();
-    toast(isDraft
-      ? 'Details saved as a draft. The location step (C2) is the next screen to build.'
-      : 'Changes saved.');
-    navigate('/mine');
+    await persistDraft();
   }
 
   const perPerson = (people) => baht(Math.ceil(total / people));
@@ -145,9 +161,20 @@ function ActivityForm({ existing }) {
             id="title"
             className={`input strong${shown.title ? ' invalid' : ''}`}
             placeholder="e.g. Football pickup match"
-            maxLength={100}
+            maxLength={200}
             value={form.title}
             onChange={(e) => update({ title: e.target.value })}
+          />
+        </Field>
+
+        <Field label="Description" htmlFor="description" error={shown.description}>
+          <textarea
+            id="description"
+            className={`input${shown.description ? ' invalid' : ''}`}
+            placeholder="What will happen, who should join, and what should they bring?"
+            maxLength={2000}
+            value={form.description}
+            onChange={(e) => update({ description: e.target.value })}
           />
         </Field>
 
@@ -305,6 +332,7 @@ function ActivityForm({ existing }) {
           {paid && form.splitMode === 'individual' && (
             <p className="hint">Each member pays for what they use. The items above are shown as reference prices.</p>
           )}
+          {shown.costItems && <p className="error">{shown.costItems}</p>}
         </Field>
 
         <Field
@@ -339,7 +367,10 @@ function ActivityForm({ existing }) {
               <button type="button" className="btn-add" onClick={addRule}>Add</button>
             </div>
           </div>
+          {shown.rules && <p className="error">{shown.rules}</p>}
         </Field>
+
+        {serverError && <p className="error-summary" role="alert">{serverError}</p>}
 
         {hasErrors(shown) && (
           <div className="error-summary" ref={summaryRef} role="alert">
@@ -350,8 +381,8 @@ function ActivityForm({ existing }) {
           </div>
         )}
 
-        <button type="submit" className="btn-primary">
-          <span>{isDraft ? 'Next: set the location' : 'Save changes'}</span>
+        <button type="submit" className="btn-primary" disabled={saving}>
+          <span>{saving ? 'Saving…' : isDraft ? 'Save activity draft' : 'Save changes'}</span>
           <span className="arrow" aria-hidden="true">&rarr;</span>
         </button>
       </form>

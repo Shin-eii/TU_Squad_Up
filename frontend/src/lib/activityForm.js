@@ -16,6 +16,7 @@ export function emptyForm(now = new Date()) {
   start.setHours(16, 0, 0, 0);
   return {
     title: '',
+    description: '',
     category: 'Sports',
     date: toDateInput(start),
     startTime: '16:00',
@@ -39,6 +40,7 @@ export function activityToForm(a) {
   const end = a.endAt ? new Date(a.endAt) : null;
   return {
     title: a.title,
+    description: a.description ?? '',
     category: a.category,
     date: start ? toDateInput(start) : '',
     startTime: start ? toTimeInput(start) : '',
@@ -72,16 +74,17 @@ export function formToActivity(form, existing, member) {
     role: 'host',
     status: 'draft', // becomes 'open' once C2 (location) and C4 (publish) exist
     locationName: null,
-    confirmedCount: 1, // the host counts toward capacity
+    confirmedCount: 0, // host participation is an explicit later decision
     pendingRequests: 0,
     guestCount: 0,
-    myStatus: 'approved',
+    myStatus: null,
     myBalance: 0,
   };
 
   return {
     ...base,
     title: form.title.trim(),
+    description: form.description.trim(),
     category: form.category,
     startAt: start ? start.toISOString() : null,
     endAt: end ? end.toISOString() : null,
