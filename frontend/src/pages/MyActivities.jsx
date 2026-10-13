@@ -2,10 +2,10 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useToast } from '../components/Toast.jsx';
-import { CURRENT_MEMBER } from '../data/mockData.js';
 import { groupActivities } from '../lib/activityStatus.js';
 import { baht, costTotal, formatWhen } from '../lib/format.js';
 import { useActivities } from '../store/ActivityContext.jsx';
+import { useAuth } from '../store/AuthContext.jsx';
 
 const FILTERS = [
   { key: 'all', label: 'ALL' },
@@ -21,6 +21,7 @@ export default function MyActivities() {
   const navigate = useNavigate();
   const toast = useToast();
   const { activities, updateActivity, removeActivity, resetDemo } = useActivities();
+  const { user } = useAuth();
   const [filter, setFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
   const [pending, setPending] = useState(null); // { kind, activity } awaiting confirmation
@@ -89,7 +90,7 @@ export default function MyActivities() {
   return (
     <>
       <header className="page-head">
-        <div className="eyebrow">{CURRENT_MEMBER.name} &middot; host and participant</div>
+        <div className="eyebrow">{user.displayName} &middot; host and participant</div>
         <h1>My activities</h1>
         <div className="filter-chips" role="group" aria-label="Filter activities">
           {FILTERS.map((f) => (
