@@ -379,6 +379,55 @@ button { cursor: pointer; }
 .footer-note { padding: var(--space-6) var(--space-3); text-align: center; font-size: 11px; color: var(--color-neutral-600); }
 .footer-note button { background: none; border: 0; padding: 0; font-size: 11px; font-weight: 700; color: var(--color-neutral-700); text-decoration: underline; }
 
+/* ---------- Login + app header ---------- */
+.btn-sso {
+  width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  border: 2px solid var(--color-neutral-400);
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+  font-weight: 700;
+  font-size: 14.5px;
+}
+.btn-sso:disabled { cursor: not-allowed; }
+.account-list { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.account-list legend { padding: 0; margin-bottom: 6px; }
+.account-option {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  border: 1px solid var(--color-neutral-400);
+  background: #fff;
+  padding: var(--space-3);
+  cursor: pointer;
+}
+.account-option:hover { background: var(--color-neutral-200); }
+.account-option:has(input:checked) { border-color: var(--color-text); box-shadow: inset 0 0 0 1px var(--color-text); }
+.account-option input { accent-color: var(--color-accent); margin: 3px 0 0; }
+.account-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.account-name { font-weight: 800; font-size: 16px; }
+.account-list:disabled .account-option { cursor: default; opacity: .6; }
+.login-error { margin: 0; font-size: 13px; line-height: 1.5; }
+.btn-primary:disabled { opacity: .6; cursor: progress; }
+.status-title { font-weight: 800; font-size: 20px; color: var(--color-text); margin: 0 0 6px; }
+.empty .btn-primary { text-decoration: none; }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-3);
+  border-bottom: 1px solid var(--color-neutral-400);
+  font-size: 11.5px;
+  color: var(--color-neutral-700);
+}
+.app-header-who { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.app-header .badge { padding: 2px 5px; font-size: 9px; }
+
 /* ---------- Tab bar ---------- */
 .tabbar {
   position: sticky;
